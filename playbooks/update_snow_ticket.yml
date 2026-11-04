@@ -34,7 +34,7 @@
 
     - name: Add resolved fields when closing
       ansible.builtin.set_fact:
-        snow_payload: "{{ snow_payload | combine({'close_code': 'Solved (Permanently)', 'close_notes': notification_body | default('Resolved by automated remediation.')}) }}"
+        snow_payload: "{{ snow_payload | combine({'close_code': 'Resolved by change', 'close_notes': notification_body | default('Resolved by automated remediation.')}) }}"
       when: snow_ticket_state | default('') == '6'
 
     - name: Update SNOW ticket
