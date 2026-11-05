@@ -1,0 +1,320 @@
+{
+  "name": "Ticket Enrichment Demo",
+  "edges": [
+    {
+      "to": "auto_remediation_job",
+      "from": "route_switch",
+      "from_port": "case_0"
+    },
+    {
+      "to": "remediation_job_approved",
+      "from": "approval_gate",
+      "from_port": "approved"
+    },
+    {
+      "to": "enrich_and_assign_agent",
+      "from": "route_switch",
+      "from_port": "case_2"
+    },
+    {
+      "to": "triage_agent",
+      "from": "servicenow_trigger"
+    },
+    {
+      "to": "update_snow_ticket_4",
+      "from": "triage_agent"
+    },
+    {
+      "to": "route_switch",
+      "from": "update_snow_ticket_4"
+    },
+    {
+      "to": "update_snow_ticket",
+      "from": "auto_remediation_job"
+    },
+    {
+      "to": "update_snow_ticket_2",
+      "from": "enrich_and_assign_agent"
+    },
+    {
+      "to": "update_snow_ticket_3",
+      "from": "remediation_job_approved"
+    },
+    {
+      "to": "approval_gate",
+      "from": "route_switch",
+      "from_port": "case_1"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "approval_gate",
+      "name": "Approve Remediation Change",
+      "type": "approval",
+      "position": {
+        "x": 1404.567865347284,
+        "y": 215.69527207478808
+      },
+      "parameters": {}
+    },
+    {
+      "id": "auto_remediation_job",
+      "name": "Run Auto Remediation",
+      "type": "aap_job_template",
+      "position": {
+        "x": 1372.7390314345491,
+        "y": -150.07495824423026
+      },
+      "parameters": {
+        "limit": "${triage_agent.result.content.affected_system}",
+        "diff_mode": false,
+        "extra_vars": {
+          "category": "${triage_agent.result.content.category}",
+          "affected_system": "${triage_agent.result.content.affected_system}",
+          "incident_number": "${trigger.incident_number}",
+          "recommended_action": "${triage_agent.result.content.recommended_action}"
+        },
+        "job_template_name": "${triage_agent.result.content.job_template_name}",
+        "organization_name": "Default"
+      }
+    },
+    {
+      "id": "update_snow_ticket",
+      "name": "Update SNOW Ticket",
+      "type": "aap_job_template",
+      "position": {
+        "x": 1723.9345057345472,
+        "y": -148.41552073190576
+      },
+      "parameters": {
+        "diff_mode": false,
+        "extra_vars": {
+          "ticket_id": "${trigger.incident_number}",
+          "snow_password": "YOUR_SNOW_PASSWORD",
+          "snow_username": "YOUR_SNOW_USERNAME",
+          "notification_body": "${triage_agent.result.content.notification_body}",
+          "snow_instance_url": "YOUR_SNOW_INSTANCE_URL",
+          "snow_ticket_state": "6",
+          "notification_title": "${triage_agent.result.content.notification_title}"
+        },
+        "job_template_name": "Incidents | Update Ticket",
+        "organization_name": "Default"
+      }
+    },
+    {
+      "id": "enrich_and_assign_agent",
+      "name": "Enrich and Assign",
+      "type": "agentic",
+      "position": {
+        "x": 912.6913558793628,
+        "y": 713.6005851447286
+      },
+      "parameters": {
+        "prompt": "Incident ${trigger.incident_number} has been classified as inform only (Priority: ${triage_agent.result.content.priority_label}, Category: ${triage_agent.result.content.category}). Automated remediation is not appropriate. Enrich the ticket with context and update its status for manual handling.\n\nContext from triage: The affected system is ${triage_agent.result.content.affected_system}. The recommended action is ${triage_agent.result.content.recommended_action}. Reasoning: ${triage_agent.result.content.reasoning}.\n\nStep 1 Search for related recent incidents:\nCall 'servicenow-mcp::search_incidents' with:\n  query: 'short_descriptionLIKE${triage_agent.result.content.short_description}^sys_created_on>=javascript:gs.daysAgo(30)'\n  limit: 10\n\nStep 2 Add a detailed internal work note with your analysis:\nCall 'servicenow-mcp::add_work_note' with:\n  number: '${trigger.incident_number}'\n  work_note: Write a detailed internal work note for the operations team. Summarize your triage findings, the affected system, priority, recommended next steps, your reasoning, and any patterns or related incidents you found in the search. Keep it concise and actionable.\n\nStep 3 Notify the customer:\nCall 'servicenow-mcp::update_incident' with:\n  number: '${trigger.incident_number}'\n  comment: Write a professional customer-facing message acknowledging their incident. Let them know it has been analyzed and assigned to the appropriate team for review. Mention they can expect an update within their SLA window. Keep it brief and reassuring.\n\nStep 4 Set the incident to In Progress:\nCall 'servicenow-mcp::update_incident' with:\n  number: '${trigger.incident_number}'\n  state: '2'\n\nConfirm all steps completed successfully.",
+        "tool_selection_strategy": "SELECTED",
+        "tool_selections": [],
+        "integration_connections": []
+      }
+    },
+    {
+      "id": "update_snow_ticket_2",
+      "name": "Update SNOW Ticket",
+      "type": "aap_job_template",
+      "position": {
+        "x": 1412.2363267603594,
+        "y": 756.4129895682386
+      },
+      "parameters": {
+        "diff_mode": false,
+        "extra_vars": {
+          "ticket_id": "${trigger.incident_number}",
+          "snow_password": "YOUR_SNOW_PASSWORD",
+          "snow_username": "YOUR_SNOW_USERNAME",
+          "notification_body": "${triage_agent.result.content.notification_body}",
+          "snow_instance_url": "YOUR_SNOW_INSTANCE_URL",
+          "notification_title": "${triage_agent.result.content.notification_title}"
+        },
+        "job_template_name": "Incidents | Update Ticket",
+        "organization_name": "Default"
+      }
+    },
+    {
+      "id": "remediation_job_approved",
+      "name": "Run Approved Remediation",
+      "type": "aap_job_template",
+      "position": {
+        "x": 1810.1173770157943,
+        "y": 209.32801968524882
+      },
+      "parameters": {
+        "limit": "${triage_agent.result.content.affected_system}",
+        "diff_mode": false,
+        "extra_vars": {
+          "category": "${triage_agent.result.content.category}",
+          "affected_system": "${triage_agent.result.content.affected_system}",
+          "incident_number": "${trigger.incident_number}",
+          "recommended_action": "${triage_agent.result.content.recommended_action}"
+        },
+        "job_template_name": "${triage_agent.result.content.job_template_name}",
+        "organization_name": "Default"
+      }
+    },
+    {
+      "id": "update_snow_ticket_3",
+      "name": "Update SNOW Ticket",
+      "type": "aap_job_template",
+      "position": {
+        "x": 2136.3287512552647,
+        "y": 196.30554836053312
+      },
+      "parameters": {
+        "diff_mode": false,
+        "extra_vars": {
+          "ticket_id": "${trigger.incident_number}",
+          "snow_password": "YOUR_SNOW_PASSWORD",
+          "snow_username": "YOUR_SNOW_USERNAME",
+          "notification_body": "${triage_agent.result.content.notification_body}",
+          "snow_instance_url": "YOUR_SNOW_INSTANCE_URL",
+          "snow_ticket_state": "6",
+          "notification_title": "${triage_agent.result.content.notification_title}"
+        },
+        "job_template_name": "Incidents | Update Ticket",
+        "organization_name": "Default"
+      }
+    },
+    {
+      "id": "triage_agent",
+      "name": "AI Triage Agent",
+      "type": "agentic",
+      "position": {
+        "x": 229.60613095340574,
+        "y": 133.09492176876606
+      },
+      "parameters": {
+        "prompt": "You are an IT operations AI triage coordinator. Assess a ServiceNow incident and determine the correct response path.\n\nIncident number: ${trigger.incident_number}\n\nIMPORTANT: Make exactly one tool call per step. Do not retry any step. If a step returns no results, proceed immediately to the next step with what you have.\n\nStep 1 — Fetch the incident from ServiceNow (one call only): Call 'servicenow-mcp::get_incident' with number: '${trigger.incident_number}'. Use the returned short_description, description, priority, category, state, cmdb_ci, and sys_id. Do not search or update the incident in this step.\n\nStep 2 — Find a matching AAP job template (one call only): Use the AAP MCP tool 'job_templates_list' with no search filter — retrieve the complete list. This is an Ansible Automation Platform tool — NOT a ServiceNow tool. Do NOT call get_incident again for this step. Skip this step only if priority is 4 or 5.\n\nFrom the returned list, consider only templates that perform remediation on an affected system. Ignore install, setup, simulation, demo, and ticket-update templates.\n\nSelect the one whose purpose matches this incident's problem. If no template genuinely remediates this incident, set job_template_name to an empty string. When you do find a match, set job_template_name to the template's EXACT name, copied character-for-character from the tool output, including all spaces, pipes, and punctuation. Do not shorten, reformat, or paraphrase it.\n\nStep 3 — Output JSON classification immediately. No further tool calls after this step.\n\nRoute logic:\n\nGATE — apply this first: If job_template_name is empty, the route is 'inform_only'. This is absolute. It applies regardless of priority, category, or severity, including security incidents. Do not override it based on your own assessment of how serious the incident is. Stop and output.\n\nIf a matching template WAS confirmed in Step 2, apply these rules:\n\n'auto_remediate': Priority 1-2, low-risk automated fix (service restart, disk cleanup, log rotation, config reset), matching AAP template confirmed in Step 2. No risk flags in description.\n\n'needs_approval': ANY of these conditions:\n  - Priority 1-2, risky fix (package upgrade, firewall change, network reconfig, process termination), matching AAP template confirmed in Step 2\n  - Priority 3, description contains risk language such as \"human review recommended\", \"may interrupt\", \"potential data loss\", \"requires verification\", or similar caution flags, AND matching AAP template confirmed in Step 2\n\n'inform_only': Priority 4-5, or no matching AAP template found, or no safe/risky automated action available\n\nNote: 'inform_only' does not mean the incident is ignored. It means no automation exists for it, so the ticket is annotated and left for a human to handle. Choosing 'inform_only' for a severe incident is the correct outcome when no template matches.\n\nOutput ONLY valid JSON: { \"route\": \"\", \"priority_label\": \"\", \"affected_system\": \"\", \"category\": \"\", \"short_description\": \"\", \"recommended_action\": \"\", \"reasoning\": \"\", \"incident_sys_id\": \"\", \"job_template_name\": \"\", \"notification_title\": \"\", \"notification_body\": \"\" }\n\nFor notification_body, write a concise summary of the triage result: what was found, what route was chosen, and why. If the route is 'needs_approval', also explain why human approval is required, what the potential impact is, and that the workflow is awaiting approval before proceeding. This will be posted as a work note to the ServiceNow ticket by the next workflow step.",
+        "response_schema": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string"
+            },
+            "category": {
+              "type": "string"
+            },
+            "reasoning": {
+              "type": "string"
+            },
+            "priority_label": {
+              "type": "string"
+            },
+            "affected_system": {
+              "type": "string"
+            },
+            "incident_sys_id": {
+              "type": "string"
+            },
+            "job_template_name": {
+              "type": "string"
+            },
+            "notification_body": {
+              "type": "string"
+            },
+            "short_description": {
+              "type": "string"
+            },
+            "notification_title": {
+              "type": "string"
+            },
+            "recommended_action": {
+              "type": "string"
+            }
+          }
+        },
+        "tool_selection_strategy": "SELECTED",
+        "tool_selections": [],
+        "integration_connections": []
+      }
+    },
+    {
+      "id": "update_snow_ticket_4",
+      "name": "Update SNOW Ticket",
+      "type": "aap_job_template",
+      "position": {
+        "x": 659.1100493332375,
+        "y": 168.26058120488835
+      },
+      "parameters": {
+        "diff_mode": false,
+        "extra_vars": {
+          "ticket_id": "${trigger.incident_number}",
+          "snow_password": "YOUR_SNOW_PASSWORD",
+          "snow_username": "YOUR_SNOW_USERNAME",
+          "notification_body": "${triage_agent.result.content.notification_body}",
+          "snow_instance_url": "YOUR_SNOW_INSTANCE_URL",
+          "snow_ticket_state": "2",
+          "notification_title": "${triage_agent.result.content.notification_title}"
+        },
+        "job_template_name": "Incidents | Update Ticket",
+        "organization_name": "Default"
+      }
+    },
+    {
+      "id": "route_switch",
+      "name": "Route Decision",
+      "type": "switch",
+      "position": {
+        "x": 976.0077726666068,
+        "y": 161.5710527221718
+      },
+      "parameters": {
+        "cases": [
+          {
+            "port": "case_0",
+            "label": "Auto Remediate",
+            "condition": "${triage_agent.result.content.route} == 'auto_remediate'"
+          },
+          {
+            "port": "case_1",
+            "label": "Needs Approval",
+            "condition": "${triage_agent.result.content.route} == 'needs_approval'"
+          },
+          {
+            "port": "case_2",
+            "label": "Inform Only",
+            "condition": "${triage_agent.result.content.route} == 'inform_only'"
+          }
+        ],
+        "default_port": "default"
+      }
+    }
+  ],
+  "triggers": [
+    {
+      "id": "servicenow_trigger",
+      "name": "ServiceNow Trigger",
+      "type": "webhook_trigger",
+      "position": {
+        "x": -87.54334965094043,
+        "y": 196.2447217357657
+      },
+      "parameters": {
+        "input_schema": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "required": [
+            "incident_number"
+          ],
+          "properties": {
+            "incident_number": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "webhook_path": "servicenow-incident"
+      }
+    }
+  ],
+  "description": "Ticket Enrichment Demo",
+  "schema_version": "2.0.0"
+}

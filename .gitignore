@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+.DS_Store
+
+# ServiceNow credentials copied from secret.example.yaml
+demo-setup/servicenow-mcp/openshift/secret.yaml
+
+# EC2 private key created for the ticket-enrichment demo VM
+ao-ticket-demo-key.pem
+*.pem

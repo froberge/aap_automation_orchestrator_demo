@@ -1,0 +1,16 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: servicenow-mcp
+  namespace: servicenow-mcp
+  labels:
+    app: servicenow-mcp
+spec:
+  to:
+    kind: Service
+    name: servicenow-mcp
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

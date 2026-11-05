@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: servicenow-mcp
+  namespace: servicenow-mcp
+  labels:
+    app: servicenow-mcp
+spec:
+  selector:
+    app: servicenow-mcp
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

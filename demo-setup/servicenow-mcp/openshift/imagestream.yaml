@@ -1,0 +1,10 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: servicenow-mcp
+  namespace: servicenow-mcp
+  labels:
+    app: servicenow-mcp
+spec:
+  lookupPolicy:
+    local: true
